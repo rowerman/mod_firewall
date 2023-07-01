@@ -503,7 +503,7 @@ void list_function()
 		if (level_check(file_work_level) == 1)
 		{
 			printf("ID protocol source_ip destination_ip source_port destination_port \n");
-			count_get(file_count_path);
+			count_get();
 			int i = 0;
 			for (i = 0; i <= count; i++)
 			{
@@ -535,7 +535,7 @@ void clear_function()
 		check_devicefile(device_file_path);
 		// clear(device_file_path);
 		clear(file_path);
-		count_delete_all(file_count_path); // clear the record number
+		count_delete_all(); // clear the record number
 		printf("clear the filter \n");
 	}
 	else
