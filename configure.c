@@ -75,16 +75,17 @@ unsigned int controlled_daddr = 0;
 int count = -1;				// the sequence of the record
 char file_path[128];		// the file to save the filter
 char file_count_path[128];	// the file to save the number of filter
+char file_mode_path[128];	// the file to save the mode
 char device_file_path[128]; // the device file to send the filter to kernel
 char file_mode[128];		// 0 or 1 , mode = 0 :BLACK, mode = 1:WHITE
 char file_work_level[128];	// 1-5；1 NF_INET_PRE_ROUTING 2 NF_INET_LOCAL_IN 3 NF_INET_FORWARD 4 NF_INET_LOCAL_OUT 5 NF_INET_POST_ROUTING
 struct control_message
 {
-	char controlled_protocol[20];;
-	char controlled_saddr[20];
-	char controlled_daddr[20];
+	char controlled_protocol[20];
 	char controlled_srcport[20];
 	char controlled_dstport[20];
+	char controlled_saddr[20];
+	char controlled_daddr[20];
 };
 
 struct time_message
@@ -159,6 +160,7 @@ void time_file_init();									// init the time file
 void time_file_create(char *file_time_path);			// create the time file
 void init_path(char *file_mode, char *file_work_level); // init the file_path and file_count_path and device_file_path
 void level_and_mode_show(char mode, char level);		// show the mode and work_level
+void mode_level_cover_mode();
 
 void count_delete();	 // delete the record number
 void count_add();		 // add the record number
@@ -249,10 +251,10 @@ void add_function(int argc, char *argv[])
 	struct control_message message =
 		{
 			"0",
-			"0.0.0.0",
-			"0.0.0.0",
 			"0",
-			"0"};
+			"0",
+			"0.0.0.0",
+			"0.0.0.0"};
 	char controlinfo[32];
 	int controlinfo_len = 0;
 	int fd, savefd;
@@ -273,11 +275,10 @@ void add_function(int argc, char *argv[])
 	int fds = open(file_count_path, O_RDWR | O_CREAT, 0666);
 	close(fds); // the two are not working, just some kind of protection
 
-	//fd = open(device_file_path, O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
+	// fd = open(device_file_path, O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
 	savefd = open(file_path, O_CREAT | O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
 
-	/*
-	if (fd > 0)
+	/*if (fd > 0)
 	{
 		// device_info_saved(fd, controlinfo);
 		write(fd, controlinfo, controlinfo_len);
@@ -289,7 +290,7 @@ void add_function(int argc, char *argv[])
 		exit(1);
 	}
 	close(fd);
-	*/
+*/
 	if (savefd < 0)
 	{
 		printf("can't open %s \n", file_path);
@@ -326,7 +327,7 @@ void delete_function()
 			scanf("%d", &assignment_record);
 			check_out_of_number(assignment_record);
 			char buf1[1024];
-			//char buf2[1024];
+			char buf2[1024];
 			choose(file_path, assignment_record, buf1);
 
 			printf("the record you choose to delete is :\n%d %s\n", assignment_record, buf1);
@@ -336,8 +337,8 @@ void delete_function()
 			// printf("%c\n", buf[strlen(buf) - 1]); // the last character, not \n
 
 			delete_record(file_path, assignment_record, buf1);
-			count_delete(file_count_path); // delete the record number
-			//delete_record(device_file_path, assignment_record, buf2);
+			count_delete(); // delete the record number
+							// delete_record(device_file_path, assignment_record, buf2);
 		}
 		printf("delete the record successfully! \n");
 	}
@@ -486,6 +487,7 @@ void cut_record(char buf1[], char buf2[])
 void list_function()
 {
 	printf("list the filter \n");
+
 	level_and_mode_show(file_mode[0], file_work_level[0]); // show the level and mode
 	int fd;
 	char buf[1024];
@@ -530,8 +532,8 @@ void clear_function()
 	scanf("%c", &option);
 	if (option == 'y')
 	{
-		//check_devicefile(device_file_path);
-		//clear(device_file_path);
+		check_devicefile(device_file_path);
+		// clear(device_file_path);
 		clear(file_path);
 		count_delete_all(file_count_path); // clear the record number
 		printf("clear the filter \n");
@@ -676,6 +678,7 @@ void work_level_change()
 		lseek(fd, 0, SEEK_SET);
 		write(fd, file_work_level, 1);
 		close(fd);
+		mode_level_cover_mode();
 		level_and_mode_show(file_mode[0], file_work_level[0]);
 	}
 	else
@@ -1125,7 +1128,7 @@ void display_usage(char *commandname)
 	printf("here are the functions and corresponding parameters: \n");
 	printf("Usage of add funcion: %s -p protocol -x saddr -y daddr -m srcport -n dstport \n", commandname);
 	printf("Usage of list funcion: %s -ls\n", commandname);
-	printf("Usage of delete function: %s -d number \n", commandname);
+	printf("Usage of delete function: %s -d\n", commandname);
 	printf("Usage of clear function: %s -dl \n", commandname);
 	printf("Usage of help function: %s -h \n", commandname);
 	printf("Usage of change mode funtion: %s -c  \n", commandname);
@@ -1151,8 +1154,13 @@ void surprise()
 
 void init()
 {
+	// printf("file_mode = %s\n", file_mode);
 	Create_Mode_File();
+	// printf("file_mode = %s\n", file_mode);
 	time_file_init();
+
+	// printf("file_mode_path = %s\n", FILE_MODE_PATH);
+
 	int fd = open(FILE_MODE_PATH, O_RDWR | O_CREAT, 0666);
 	if (fd < 0)
 	{
@@ -1235,10 +1243,12 @@ void time_function()
 			time_stamp_set(&start_time_message);
 			printf("please input the end time stamp: \n");
 			time_stamp_set(&end_time_message);
+			/*
 			if (time_stamp_check(start_time_message, end_time_message) == 0)
 			{
 				exit(1);
 			}
+			*/
 			// time_add_device_file(start_time_message, end_time_message);
 			time_add_file(start_time_message, end_time_message);
 			printf("the time stamp is set successfully! \n");
@@ -1386,6 +1396,53 @@ void time_input_get(char low[], char high[], char time[])
 		exit(1);
 	}
 	strcpy(time, buf);
+}
+
+void mode_level_cover_mode()
+{
+	int fd;
+	switch (file_work_level[0])
+	{
+	case '1':
+		strcpy(file_mode_path, FILE_MODE_PATH_1);
+		break;
+	case '2':
+		strcpy(file_mode_path, FILE_MODE_PATH_2);
+		break;
+	case '3':
+		strcpy(file_mode_path, FILE_MODE_PATH_3);
+		break;
+	case '4':
+		strcpy(file_mode_path, FILE_MODE_PATH_4);
+		break;
+	case '5':
+		strcpy(file_mode_path, FILE_MODE_PATH_5);
+		break;
+	default:
+		printf("unpredictable fault happens! \n");
+		exit(1);
+	}
+
+	char buf[128];
+	fd = open(file_mode_path, O_RDWR);
+	if (fd < 0)
+	{
+		printf("can't open %s \n", file_mode_path);
+		exit(1);
+	}
+	read(fd, buf, 1);
+	file_mode[0] = buf[0];
+	close(fd);
+
+	fd = open(FILE_MODE_PATH, O_RDWR | O_CREAT, 0666);
+	if (fd < 0)
+	{
+		printf("can't open %s \n", FILE_MODE_PATH);
+		exit(1);
+	}
+	lseek(fd, 0, SEEK_SET);
+	write(fd, file_mode, 1);
+	close(fd);
 }
 
 int time_check(char low[], char high[], char time[])
