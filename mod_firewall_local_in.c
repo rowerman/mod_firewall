@@ -818,12 +818,12 @@ unsigned int hook_func(void * priv,struct sk_buff *skb,const struct nf_hook_stat
 
 static int __init initmodule(void)
 {
-    pre_process(pre_pointer);
     if(Get_signal())
 	Signal = 1;
     else
-	Signal = 0; 
+	Signal = 0;
     printk("Init Module\n");
+    pre_process(pre_pointer);
     myhook.hook=hook_func;
     myhook.hooknum=NF_INET_LOCAL_IN;
     myhook.pf=PF_INET;

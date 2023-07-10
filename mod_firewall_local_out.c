@@ -130,7 +130,7 @@ int Get_signal(void )
     file = filp_open(change_file, O_RDONLY, 0);
     if (IS_ERR(file)) {
 	printk("fail fail fail!!!!");
-        printk(KERN_ERR "Failed to open file\n");
+        printk(KERN_ERR "Failed to open file_Get_signal!\n");
 	long err = PTR_ERR(file);
 	printk("error_num: %ld",err);
         return PTR_ERR(file);
@@ -206,7 +206,7 @@ void pre_process(char pre_pointer[])
     if (IS_ERR(file)) {
 	long err = PTR_ERR(file);
 	printk("error_num: %ld",err);
-        printk(KERN_ERR "Failed to open file\n");
+        printk(KERN_ERR "Failed to open file_Get_law!_line209! \n");
         return ;
     }
 
@@ -450,12 +450,8 @@ int local_out_ip_check_white(unsigned int daddr,int num_of_rules)
     for(i=0;i<num_of_rules;i++)
     {
 	if(droped_ip[i] == 1);
-	{
-	   printk("white package was accepted!!!!!");
 	   return PASS;
-	}
     }
-    printk("white package was droped!!!!");
     return NPASS;
 }
 
@@ -467,7 +463,7 @@ int local_out_ip_check_white(unsigned int daddr,int num_of_rules)
 		return MATCH;
 	if ((controlled_saddr != 0 ) && ( controlled_daddr == 0 ))
 	{
-		if (controlled_saddr == saddr) //�ڰ������У�if (controlled_saddr == saddr||con)
+		if (controlled_saddr == saddr) // ڰ      У if (controlled_saddr == saddr||con)
 			return MATCH;
 		else
 			return NMATCH;
@@ -493,7 +489,7 @@ int local_out_ip_check_white(unsigned int daddr,int num_of_rules)
 
 /*int port_check_white(unsigned short srcport, unsigned short dstport)
 {
-    if ((controlled_srcport != 0 ) && ( controlled_dstport != 0 ))      //��Ч�������������뽫Դ��Ŀ�궼�������
+    if ((controlled_srcport != 0 ) && ( controlled_dstport != 0 ))      //  Ч             뽫Դ  Ŀ 궼       
     {
         if(((controlled_srcport == srcport) && (controlled_dstport == dstport))||((controlled_srcport == dstport) && (controlled_dstport == srcport)))
             return PASS;
@@ -516,7 +512,7 @@ int local_out_ip_check_white(unsigned int daddr,int num_of_rules)
 
 /*int ipaddr_check_white(unsigned int saddr, unsigned int daddr)
 {
-    if ((controlled_saddr != 0 ) && ( controlled_daddr != 0 ))      //��Ч�������������뽫Դ��Ŀ�궼�������
+    if ((controlled_saddr != 0 ) && ( controlled_daddr != 0 ))      //  Ч             뽫Դ  Ŀ 궼       
     {
         if(((controlled_saddr == saddr) && (controlled_daddr == daddr))||((controlled_saddr == daddr) && (controlled_daddr == saddr)))
             return PASS;
@@ -537,8 +533,7 @@ int local_out_ip_check_white(unsigned int daddr,int num_of_rules)
     return ipaddr_check_white(saddr,daddr);
 }*/
 
-int local_out_check_black(unsigned int daddr,unsigned short dstport,
-int num_of_rules)
+int local_out_check_black(unsigned int daddr,unsigned short dstport,int num_of_rules)
 {
     int droped_ip[100] = {0};
     int droped_port[100] = {0};
@@ -599,22 +594,21 @@ int local_out_check_white(unsigned int daddr,int num_of_rules)
 
     int i;
     printk("get white dest ip: %u",daddr);
-    printk("stored white desttttttt ip: %u",control_daddr[0]);
 
     for(i=0;i<num_of_rules;i++)
     {
         if(control_daddr[i]==0)  //白名单下，端口为0应默认丢弃
         {
-            printk("local_out_check_black droped because no ip was offered");
+            printk("local_out_port_check_white dropped because no port was offered");
             droped_ip[i] = 1;
         }
         else if(control_daddr[i] == daddr)
             {
-                printk("local_out_check_white accped because the ip was matched");
+                printk("local_out_address_check_white accepted because the port was matched");
             }
             else
             {
-                printk("local_out_check_white droped because the ip was not matched");
+                printk("local_out_port_white dropped because the port was not matched");
                 droped_ip[i] = 1;
             }
 
@@ -623,12 +617,8 @@ int local_out_check_white(unsigned int daddr,int num_of_rules)
     for(i=0;i<num_of_rules;i++)
     {
         if(droped_ip[i] == 0)
-	{
-	    printk("white package was accepted!!!!!!");
             return PASS;
-	}
     }
-    printk("white package was droped!!!!!!");
     return NPASS;
 }
 
@@ -828,11 +818,11 @@ unsigned int hook_func(void * priv,struct sk_buff *skb,const struct nf_hook_stat
 
 static int __init initmodule(void)
 {
-    pre_process(pre_pointer);
     if(Get_signal())
 	Signal = 1;
     else
 	Signal = 0; 
+    pre_process(pre_pointer);
     printk("Init Module\n");
     myhook.hook=hook_func;
     myhook.hooknum=NF_INET_LOCAL_OUT;
